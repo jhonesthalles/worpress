@@ -1,0 +1,63 @@
+/* --------------------------------------------------
+ * Destacar apenas um preço *
+ ------------------------------------------------- */
+
+add_filter('woocommerce_variable_sale_price_html', 'shop_variable_product_price', 10, 2);
+add_filter('woocommerce_variable_price_html','shop_variable_product_price', 10, 2 );
+function shop_variable_product_price( $price, $product ){
+    $variation_min_reg_price = $product->get_variation_regular_price('min', true);
+    $variation_min_sale_price = $product->get_variation_sale_price('min', true);
+    if ( $product->is_on_sale() && !empty($variation_min_sale_price)){
+        if ( !empty($variation_min_sale_price) )
+            $price = '<del class="strike">' .  woocommerce_price($variation_min_reg_price) . '</del>
+        <ins class="highlight">' .  woocommerce_price($variation_min_sale_price) . '</ins>';
+    } else {
+        if(!empty($variation_min_reg_price))
+            $price = '<ins class="highlight">'.woocommerce_price( $variation_min_reg_price ).'</ins>';
+        else
+            $price = '<ins class="highlight">'.woocommerce_price( $product->regular_price ).'</ins>';
+    }
+    return $price;
+}
+
+/* --------------------------------------------------
+ * Ocultar exibição das categorias na página inicial*
+ ------------------------------------------------- */
+
+add_filter('get_the_terms', 'ocultar_categorias', 10, 3);
+function ocultar_categorias($terms, $tag_ID, $taxonomy){
+
+    //Defina os IDs das categorias
+    $excludeIDs = array(199,200,201,202,203,204,205,206,207);
+
+    //Obtemos todos os termos 
+    $exclude = array();
+    foreach ($excludeIDs as $id) {
+        $exclude[] = get_term_by('id', $id, 'product_cat');
+    }
+
+    // Filtramos as categorias
+    foreach($terms as $key => $term){
+        if($term->taxonomy == "product_cat"){
+            foreach ($exclude as $exKey => $exTerm) {
+                if($term->term_id == $exTerm->term_id) unset($terms[$key]);
+            }
+        }
+    }
+
+    return $terms;
+}
+
+/* --------------------------------------------------
+ * Ocultar exibição das categorias no widget*
+ ------------------------------------------------- */
+ 
+add_filter( 'woocommerce_product_categories_widget_args', 'woo_product_cat_widget_args' );
+
+function woo_product_cat_widget_args( $cat_args ) {
+
+                $cat_args['exclude'] = array(199,200,201,202,203,204,205,206,207);
+
+                return $cat_args;
+
+}
